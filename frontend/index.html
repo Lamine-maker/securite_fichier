@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Chiffrement DES - Projet Lamine</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <main class="container">
+    <header>
+        <h1>Application de chiffrement DES</h1>
+        <p>Choisissez un fichier Word (.docx) et une clé de 8 caractères.</p>
+    </header>
+
+    <form id="fileForm">
+        <label>Fichier :</label>
+        <input id="fileInput" type="file" accept=".doc,.docx,.bin,application/octet-stream" required />
+
+        <label>Clé (8 caractères) :</label>
+        <input id="keyInput" type="text" maxlength="8" required />
+
+        <div class="buttons">
+            <button id="encryptBtn" type="button">Chiffrer</button>
+            <button id="decryptBtn" type="button">Déchiffrer</button>
+        </div>
+
+        <p id="status"></p>
+    </form>
+
+        <section id="downloadSection" class="hidden">
+        <p>Résultat :</p>
+        <a id="downloadLink" href="#" download>Télécharger le fichier</a>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
