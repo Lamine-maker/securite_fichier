@@ -2,3 +2,4 @@ Flask
 pycryptodome
 python-docx
 flask-cors
+gunicorn
