@@ -1,18 +1,21 @@
-# app.py
-from flask import Flask, request, send_file, jsonify
+from flask import Flask, request, send_file, jsonify, render_template, send_from_directory
 from flask_cors import CORS
 from des_crypto import encrypt_data, decrypt_data
 from io import BytesIO
 import os
 
-app = Flask(__name__)
+# Initialisation de l'app Flask
+app = Flask(__name__, static_folder='static', template_folder='templates')
 CORS(app)
 
-@app.route("/")
-def home():
-    return jsonify({"message": "API de chiffrement DES opérationnelle"})
+# === ROUTE FRONTEND ===
+@app.route('/')
+def index():
+    """Affiche la page d'accueil (frontend)."""
+    return render_template('index.html')
 
-@app.route("/encrypt", methods=["POST"])
+# === ROUTES BACKEND (API) ===
+@app.route("/api/encrypt", methods=["POST"])
 def encrypt_file():
     try:
         uploaded_file = request.files.get("file")
@@ -40,7 +43,7 @@ def encrypt_file():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route("/decrypt", methods=["POST"])
+@app.route("/api/decrypt", methods=["POST"])
 def decrypt_file():
     try:
         uploaded_file = request.files.get("file")
@@ -66,6 +69,13 @@ def decrypt_file():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+# === ROUTE DE SECOURS POUR SERVIR LES FICHIERS STATIQUES ===
+@app.route('/<path:filename>')
+def serve_static(filename):
+    """Permet de servir style.css, script.js, etc."""
+    return send_from_directory(app.static_folder, filename)
 
 
 if __name__ == "__main__":
