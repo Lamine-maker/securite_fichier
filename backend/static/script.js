@@ -16,7 +16,7 @@ function sendFile(endpoint) {
     const file = fileInput.files[0];
     const key = keyInput.value;
 
-    // 🧩 Vérifications utilisateur
+    //  Vérifications utilisateur
     if (!file) {
         statusEl.textContent = "⚠️ Veuillez choisir un fichier à chiffrer ou déchiffrer.";
         return;
@@ -34,7 +34,7 @@ function sendFile(endpoint) {
     statusEl.textContent = "⏳ Envoi du fichier au serveur...";
     downloadSection.classList.add("hidden");
 
-    // 🔥 Envoi vers l'API Flask
+    //  Envoi vers l'API Flask
     fetch(`${API_BASE}/${endpoint}`, {
         method: "POST",
         body: formData,
@@ -46,7 +46,7 @@ function sendFile(endpoint) {
         .then((blob) => {
             const url = URL.createObjectURL(blob);
 
-            // 🔽 Prépare le lien de téléchargement
+            //  Prépare le lien de téléchargement
             const originalName = file.name.split(".")[0];
             const fileName =
                 endpoint === "encrypt"
@@ -65,6 +65,6 @@ function sendFile(endpoint) {
         });
 }
 
-// 🎯 Boutons d’action
+//  Boutons d’action
 encryptBtn.addEventListener("click", () => sendFile("encrypt"));
 decryptBtn.addEventListener("click", () => sendFile("decrypt"));

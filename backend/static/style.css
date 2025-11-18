@@ -1,24 +1,27 @@
 body {
-    font-family: Arial, sans-serif;
-    background: #f3f4f6;
+    font-family: "Poppins", sans-serif;
+    background: linear-gradient(135deg, #eef2ff, #dbeafe);
     color: #333;
     margin: 0;
-    padding: 0;
+    padding: 30px 0;
+    min-height: 100vh;
 }
 
 .container {
     width: 90%;
-    max-width: 600px;
+    max-width: 700px;
     margin: 50px auto;
     background: white;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    padding: 40px 30px;
+    animation: fadeIn 0.5s ease;
 }
 
 header {
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 30px;
+
 }
 
 label {
@@ -42,13 +45,15 @@ input[type="file"], input[type="text"] {
 
 button {
     flex: 1;
-    padding: 10px;
+    padding: 12px 18px;
     margin: 0 5px;
     border: none;
-    border-radius: 5px;
+    border-radius: 8px;
     color: white;
     font-weight: bold;
     cursor: pointer;
+    font-size: 16px;
+    transition: background 0.3s ease, transform 0.2s ease;
 }
 
 #encryptBtn { background: #4f46e5; }
@@ -58,4 +63,32 @@ button {
 #status {
     margin-top: 15px;
     font-weight: bold;
+}
+
+input[type="file"], input[type="text"] {
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    transition: all 0.3s ease;
+}
+
+input[type="file"]:focus, input[type="text"]:focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 8px rgba(79,70,229,0.3);
+}
+
+#encryptBtn:hover {
+    background: #3b36c4;
+    transform: translateY(-2px);
+}
+
+#decryptBtn:hover {
+    background: #4b5563;
+    transform: translateY(-2px);
+}
+
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
