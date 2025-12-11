@@ -1,12 +1,11 @@
 # des_crypto.py
+# Moteur DES (from-scratch) + modes ECB et CFB (CFB-64)
 from typing import List
+import os
 
-# Taille d’un bloc DES : 8 octets (64 bits)
-BLOCK_SIZE = 8
+BLOCK_SIZE = 8  # 64 bits
 
-# --- Tables standardisées du chiffrement DES ---
-
-# Permutation initiale
+# --- Tables DES (IP/FP/E/P/PC1/PC2/S-Boxes) ---
 IP = [
     58, 50, 42, 34, 26, 18, 10, 2,
     60, 52, 44, 36, 28, 20, 12, 4,
@@ -18,7 +17,6 @@ IP = [
     63, 55, 47, 39, 31, 23, 15, 7
 ]
 
-# Permutation finale (inverse de IP)
 FP = [
     40, 8, 48, 16, 56, 24, 64, 32,
     39, 7, 47, 15, 55, 23, 63, 31,
@@ -30,7 +28,6 @@ FP = [
     33, 1, 41, 9, 49, 17, 57, 25
 ]
 
-# Table d’expansion (E) : transforme 32 bits en 48 bits
 E = [
     32, 1, 2, 3, 4, 5,
     4, 5, 6, 7, 8, 9,
@@ -42,7 +39,6 @@ E = [
     28,29,30,31,32,1
 ]
 
-# Permutation P (appliquée après les S-boxes)
 P = [
     16,7,20,21,29,12,28,17,
     1,15,23,26,5,18,31,10,
@@ -50,7 +46,6 @@ P = [
     19,13,30,6,22,11,4,25
 ]
 
-# Tables de permutation de clé (PC-1 et PC-2)
 PC1 = [
     57,49,41,33,25,17,9,
     1,58,50,42,34,26,18,
@@ -73,10 +68,8 @@ PC2 = [
     46,42,50,36,29,32
 ]
 
-# Nombre de décalages à gauche pour chaque ronde
-SHIFTS = [1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1]
+SHIFTS = [1,1,2,2,2,2,2,2,1,2,2,2,2,2,2,1]
 
-# Huit boîtes de substitution (S-Boxes)
 S_BOX = [
     # S1
     [
@@ -136,10 +129,8 @@ S_BOX = [
     ],
 ]
 
-# --- Fonctions utilitaires de manipulation de bits ---
-
+# --- utilitaires bits/bytes ---
 def bytes_to_bits(b: bytes) -> List[int]:
-    """Convertit une séquence d’octets en liste de bits (0 ou 1)."""
     bits = []
     for byte in b:
         for i in range(7, -1, -1):
@@ -147,7 +138,6 @@ def bytes_to_bits(b: bytes) -> List[int]:
     return bits
 
 def bits_to_bytes(bits: List[int]) -> bytes:
-    """Convertit une liste de bits en octets."""
     assert len(bits) % 8 == 0
     out = bytearray()
     for i in range(0, len(bits), 8):
@@ -158,25 +148,20 @@ def bits_to_bytes(bits: List[int]) -> bytes:
     return bytes(out)
 
 def permute(bits: List[int], table: List[int]) -> List[int]:
-    """Applique une permutation sur les bits selon une table donnée."""
     return [bits[i - 1] for i in table]
 
 def left_rotate(lst: List[int], n: int) -> List[int]:
-    """Fait un décalage circulaire à gauche de n positions."""
     return lst[n:] + lst[:n]
 
-def xor_bits(a: List[int], b: List[int]) -> List[int]:
-    """Effectue un XOR bit à bit entre deux listes."""
-    return [x ^ y for x, y in zip(a, b)]
+def xor_bytes(a: bytes, b: bytes) -> bytes:
+    return bytes(x ^ y for x, y in zip(a, b))
 
-# --- Génération des sous-clés ---
-
+# --- subkeys ---
 def generate_subkeys(key8: bytes) -> List[List[int]]:
-    """Génère les 16 sous-clés de 48 bits à partir de la clé principale (64 bits)."""
     if len(key8) != 8:
         raise ValueError("La clé DES doit contenir exactement 8 octets.")
     key_bits = bytes_to_bits(key8)
-    permuted = permute(key_bits, PC1)  # suppression des bits de parité → 56 bits
+    permuted = permute(key_bits, PC1)
     C = permuted[:28]
     D = permuted[28:]
     subkeys = []
@@ -187,59 +172,47 @@ def generate_subkeys(key8: bytes) -> List[List[int]]:
         subkeys.append(subkey)
     return subkeys
 
-# --- Fonction de Feistel (fonction f) ---
-
 def feistel(R: List[int], subkey: List[int]) -> List[int]:
-    """Applique la fonction de Feistel sur la moitié droite du bloc."""
-    expanded = permute(R, E)           # Expansion 32 → 48 bits
-    xored = xor_bits(expanded, subkey) # Mélange avec la sous-clé
+    expanded = permute(R, E)
+    xored = [x ^ y for x, y in zip(expanded, subkey)]
     output_bits = []
-    # Passage dans les 8 boîtes S
     for i in range(8):
         chunk = xored[i*6:(i+1)*6]
         row = (chunk[0] << 1) | chunk[5]
         col = (chunk[1] << 3) | (chunk[2] << 2) | (chunk[3] << 1) | chunk[4]
         s_val = S_BOX[i][row][col]
-        # Conversion de la valeur S-box (0–15) en 4 bits
         for j in range(3, -1, -1):
             output_bits.append((s_val >> j) & 1)
-    return permute(output_bits, P)  # permutation finale
-
-# --- Chiffrement et déchiffrement d’un bloc (64 bits) ---
+    return permute(output_bits, P)
 
 def des_block_encrypt(block8: bytes, subkeys: List[List[int]]) -> bytes:
-    """Chiffre un bloc de 8 octets (64 bits)."""
     bits = bytes_to_bits(block8)
     bits = permute(bits, IP)
     L, R = bits[:32], bits[32:]
     for i in range(16):
         f_out = feistel(R, subkeys[i])
-        L, R = R, xor_bits(L, f_out)
+        L, R = R, [x ^ y for x, y in zip(L, f_out)]
     preoutput = R + L
     return bits_to_bytes(permute(preoutput, FP))
 
 def des_block_decrypt(block8: bytes, subkeys: List[List[int]]) -> bytes:
-    """Déchiffre un bloc de 8 octets (64 bits)."""
     bits = bytes_to_bits(block8)
     bits = permute(bits, IP)
     L, R = bits[:32], bits[32:]
     for i in range(16):
         f_out = feistel(R, subkeys[15 - i])
-        L, R = R, xor_bits(L, f_out)
+        L, R = R, [x ^ y for x, y in zip(L, f_out)]
     preoutput = R + L
     return bits_to_bytes(permute(preoutput, FP))
 
-# --- Gestion du bourrage (padding PKCS#7) ---
-
+# --- PKCS7 padding (pour ECB) ---
 def pkcs7_pad(data: bytes, block_size: int = BLOCK_SIZE) -> bytes:
-    """Ajoute un bourrage PKCS#7 pour compléter le dernier bloc."""
     pad_len = block_size - (len(data) % block_size)
     if pad_len == 0:
         pad_len = block_size
     return data + bytes([pad_len]) * pad_len
 
 def pkcs7_unpad(data: bytes, block_size: int = BLOCK_SIZE) -> bytes:
-    """Supprime le bourrage PKCS#7."""
     if not data or len(data) % block_size != 0:
         raise ValueError("Longueur de données incorrecte pour le débourrage.")
     pad_len = data[-1]
@@ -247,49 +220,78 @@ def pkcs7_unpad(data: bytes, block_size: int = BLOCK_SIZE) -> bytes:
         raise ValueError("Bourrage invalide.")
     return data[:-pad_len]
 
-# --- Fonctions principales utilisées par ton application ---
-
-def encrypt_data(data: bytes, key: bytes) -> bytes:
-    """
-    Chiffre des données en mode ECB avec DES (implémentation from scratch).
-    - data : octets à chiffrer
-    - key  : clé de 8 octets
-    Retour : octets chiffrés (multiple de 8)
-    """
+# --- API : encrypt_data / decrypt_data ---
+def encrypt_data(data: bytes, key: bytes, mode: str = "ECB", iv: bytes = None) -> bytes:
+    mode = mode.upper()
     if len(key) != 8:
-        raise ValueError("La clé doit contenir exactement 8 octets.")
+        raise ValueError("La clé DES doit contenir exactement 8 octets.")
     subkeys = generate_subkeys(key)
-    padded = pkcs7_pad(data, BLOCK_SIZE)
-    cipher_blocks = []
-    for i in range(0, len(padded), BLOCK_SIZE):
-        cipher_blocks.append(des_block_encrypt(padded[i:i+BLOCK_SIZE], subkeys))
-    return b"".join(cipher_blocks)
 
-def decrypt_data(data: bytes, key: bytes) -> bytes:
-    """
-    Déchiffre des données en mode ECB avec DES (implémentation from scratch).
-    - data : octets chiffrés
-    - key  : clé de 8 octets
-    Retour : données originales après suppression du bourrage
-    """
+    if mode == "ECB":
+        padded = pkcs7_pad(data, BLOCK_SIZE)
+        out = bytearray()
+        for i in range(0, len(padded), BLOCK_SIZE):
+            out.extend(des_block_encrypt(padded[i:i+BLOCK_SIZE], subkeys))
+        return bytes(out)
+    elif mode == "CFB":
+        if iv is None:
+            iv = os.urandom(BLOCK_SIZE)
+        if len(iv) != BLOCK_SIZE:
+            raise ValueError("IV DES doit être de 8 octets.")
+        out = bytearray()
+        feedback = iv
+        for i in range(0, len(data), BLOCK_SIZE):
+            block = data[i:i+BLOCK_SIZE]
+            keystream = des_block_encrypt(feedback, subkeys)
+            x = xor_bytes(block, keystream[:len(block)])
+            out.extend(x)
+            if len(x) == BLOCK_SIZE:
+                feedback = bytes(x)
+            else:
+                feedback = feedback[len(x):] + bytes(x)
+        return iv + bytes(out)
+    else:
+        raise ValueError("Mode DES non supporté. Utilisez 'ECB' ou 'CFB'.")
+
+def decrypt_data(data: bytes, key: bytes, mode: str = "ECB") -> bytes:
+    mode = mode.upper()
     if len(key) != 8:
-        raise ValueError("La clé doit contenir exactement 8 octets.")
-    if len(data) % BLOCK_SIZE != 0:
-        raise ValueError("Les données chiffrées doivent être un multiple de 8 octets.")
+        raise ValueError("La clé DES doit contenir exactement 8 octets.")
     subkeys = generate_subkeys(key)
-    plain_blocks = []
-    for i in range(0, len(data), BLOCK_SIZE):
-        plain_blocks.append(des_block_decrypt(data[i:i+BLOCK_SIZE], subkeys))
-    return pkcs7_unpad(b"".join(plain_blocks), BLOCK_SIZE)
 
-# --- Test rapide ---
+    if mode == "ECB":
+        if len(data) % BLOCK_SIZE != 0:
+            raise ValueError("Données chiffrées incorrectes (non multiple de 8) pour ECB.")
+        out = bytearray()
+        for i in range(0, len(data), BLOCK_SIZE):
+            out.extend(des_block_decrypt(data[i:i+BLOCK_SIZE], subkeys))
+        return pkcs7_unpad(bytes(out), BLOCK_SIZE)
+    elif mode == "CFB":
+        if len(data) < BLOCK_SIZE:
+            raise ValueError("Données CFB trop courtes (doivent contenir IV).")
+        iv = data[:BLOCK_SIZE]
+        ciphertext = data[BLOCK_SIZE:]
+        feedback = iv
+        out = bytearray()
+        for i in range(0, len(ciphertext), BLOCK_SIZE):
+            block = ciphertext[i:i+BLOCK_SIZE]
+            keystream = des_block_encrypt(feedback, subkeys)
+            p = xor_bytes(block, keystream[:len(block)])
+            out.extend(p)
+            if len(block) == BLOCK_SIZE:
+                feedback = bytes(block)
+            else:
+                feedback = feedback[len(block):] + bytes(block)
+        return bytes(out)
+    else:
+        raise ValueError("Mode DES non supporté. Utilisez 'ECB' ou 'CFB'.")
+
+# test quick
 if __name__ == "__main__":
-    key = b"12345678"
-    message = b"Bonjour DES! test 123"
-    print("Clé :", key)
-    cipher = encrypt_data(message, key)
-    print("Texte chiffre (hex) :", cipher.hex())
-    plain = decrypt_data(cipher, key)
-    print("Texte clair :", plain)
-    assert plain == message
-    print("Test réussi ✅")
+    k = b"12345678"
+    m = b"Bonjour DES! test 123"
+    c = encrypt_data(m, k, mode="ECB")
+    assert decrypt_data(c, k, mode="ECB") == m
+    c2 = encrypt_data(m, k, mode="CFB")
+    assert decrypt_data(c2, k, mode="CFB") == m
+    print("DES tests ok")

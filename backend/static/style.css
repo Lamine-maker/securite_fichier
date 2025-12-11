@@ -9,8 +9,8 @@ body {
 
 .container {
     width: 90%;
-    max-width: 700px;
-    margin: 50px auto;
+    max-width: 750px;
+    margin: 40px auto;
     background: white;
     border-radius: 15px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
@@ -21,26 +21,42 @@ body {
 header {
     text-align: center;
     margin-bottom: 30px;
-
 }
 
 label {
     display: block;
     margin-top: 15px;
+    font-weight: 600;
 }
 
-input[type="file"], input[type="text"] {
+input[type="file"], input[type="password"], input[type="text"] {
     width: 100%;
-    padding: 8px;
+    padding: 12px;
     margin-top: 5px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    transition: all 0.3s ease;
+}
+
+input:focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 8px rgba(79,70,229,0.3);
+}
+
+.radio-group {
+    margin-top: 10px;
+    display: flex;
+    gap: 20px;
+}
+
+.radio-group label {
+    font-weight: 400;
 }
 
 .buttons {
     display: flex;
     justify-content: space-between;
-    margin-top: 20px;
+    margin-top: 25px;
 }
 
 button {
@@ -58,24 +74,6 @@ button {
 
 #encryptBtn { background: #4f46e5; }
 #decryptBtn { background: #6b7280; }
-.hidden { display: none; }
-
-#status {
-    margin-top: 15px;
-    font-weight: bold;
-}
-
-input[type="file"], input[type="text"] {
-    padding: 12px;
-    border-radius: 8px;
-    border: 1px solid #cbd5e1;
-    transition: all 0.3s ease;
-}
-
-input[type="file"]:focus, input[type="text"]:focus {
-    border-color: #4f46e5;
-    box-shadow: 0 0 8px rgba(79,70,229,0.3);
-}
 
 #encryptBtn:hover {
     background: #3b36c4;
@@ -87,6 +85,63 @@ input[type="file"]:focus, input[type="text"]:focus {
     transform: translateY(-2px);
 }
 
+.hidden { display: none; }
+
+#progressContainer {
+    margin-top: 20px;
+}
+
+#progressBar {
+    width: 100%;
+    background: #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+    height: 18px;
+}
+
+#progressBar span {
+    display: block;
+    height: 100%;
+    width: 0%;
+    background: #4f46e5;
+    transition: width 0.3s;
+}
+
+#status {
+    margin-top: 15px;
+    font-weight: bold;
+}
+
+#downloadSection {
+    margin-top: 25px;
+}
+
+#downloadLink {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 10px 15px;
+    background: #4f46e5;
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+}
+
+#historySection {
+    margin-top: 30px;
+}
+
+#historyList {
+    list-style: none;
+    padding: 0;
+}
+
+#historyList li {
+    background: #f1f5f9;
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 8px;
+    font-size: 14px;
+}
 
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
