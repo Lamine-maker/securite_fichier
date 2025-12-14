@@ -2,44 +2,65 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chiffrement de fichiers</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-
 </head>
 <body>
 
-<h2>Application de chiffrement / déchiffrement</h2>
+<div class="container">
+    <header>
+        <h2>Application de chiffrement / déchiffrement</h2>
+        <p>Sécurisez vos fichiers facilement avec AES ou DES</p>
+    </header>
 
-<form action="/process" method="POST" enctype="multipart/form-data">
+    <!-- Formulaire -->
+    <form action="/process" method="POST" enctype="multipart/form-data">
+        <label for="file">Fichier :</label>
+        <input type="file" name="file" id="file" required>
 
-    <label>Fichier :</label><br>
-    <input type="file" name="file" required><br><br>
+        <label for="action">Action :</label>
+        <select name="action" id="action">
+            <option value="encrypt">Chiffrer</option>
+            <option value="decrypt">Déchiffrer</option>
+        </select>
 
-    <label>Action :</label><br>
-    <select name="action">
-        <option value="encrypt">Chiffrer</option>
-        <option value="decrypt">Déchiffrer</option>
-    </select><br><br>
+        <label for="algorithm">Algorithme :</label>
+        <select name="algorithm" id="algorithm">
+            <option value="AES">AES</option>
+            <option value="DES">DES</option>
+        </select>
 
-    <label>Algorithme :</label><br>
-    <select name="algorithm">
-        <option value="AES">AES</option>
-        <option value="DES">DES</option>
-    </select><br><br>
+        <label for="mode">Mode :</label>
+        <select name="mode" id="mode">
+            <option value="ECB">ECB</option>
+            <option value="CFB">CFB</option>
+        </select>
 
-    <label>Mode :</label><br>
-    <select name="mode">
-        <option value="ECB">ECB</option>
-        <option value="CFB">CFB</option>
-    </select><br><br>
+        <label for="key">Clé secrète :</label>
+        <input type="password" name="key" id="key" placeholder="Clé de chiffrement" required>
 
-    <label>Clé secrète :</label><br>
-    <input type="password" name="key" placeholder="Clé de chiffrement" required><br><br>
-    <button type="submit">Lancer</button>
+        <button type="submit" id="encryptBtn">Exécuter</button>
+    </form>
 
-</form>
+    <!-- Progression -->
+    <div id="progressContainer">
+        <div id="progressBar"><span></span></div>
+        <div id="status">Prêt à chiffrer / déchiffrer</div>
+    </div>
+
+    <!-- Téléchargement -->
+    <div id="downloadSection">
+        <a id="downloadLink" href="#" class="hidden">Télécharger le fichier</a>
+    </div>
+
+    <!-- Historique -->
+    <div id="historySection">
+        <h3>Historique</h3>
+        <ul id="historyList"></ul>
+    </div>
+</div>
 
 <script src="{{ url_for('static', filename='script.js') }}"></script>
-
 </body>
 </html>

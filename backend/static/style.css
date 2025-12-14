@@ -1,133 +1,135 @@
+/* --- Global --- */
 body {
     font-family: "Poppins", sans-serif;
     background: linear-gradient(135deg, #eef2ff, #dbeafe);
-    color: #333;
+    color: #1f2937;
     margin: 0;
-    padding: 30px 0;
-    min-height: 100vh;
+    padding: 0;
+}
+
+h2 {
+    text-align: center;
+    font-weight: 700;
+    margin-top: 40px;
+    color: #4f46e5;
 }
 
 .container {
-    width: 90%;
-    max-width: 750px;
-    margin: 40px auto;
-    background: white;
-    border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    max-width: 700px;
+    margin: 50px auto;
+    background: #ffffff;
     padding: 40px 30px;
+    border-radius: 15px;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.1);
     animation: fadeIn 0.5s ease;
 }
 
-header {
-    text-align: center;
-    margin-bottom: 30px;
-}
-
-label {
+/* --- Form Elements --- */
+form label {
     display: block;
-    margin-top: 15px;
+    margin-top: 20px;
     font-weight: 600;
 }
 
-input[type="file"], input[type="password"], input[type="text"] {
+form input[type="file"],
+form input[type="password"],
+form select {
     width: 100%;
-    padding: 12px;
+    padding: 12px 15px;
     margin-top: 5px;
-    border-radius: 8px;
+    border-radius: 10px;
     border: 1px solid #cbd5e1;
+    font-size: 15px;
     transition: all 0.3s ease;
 }
 
-input:focus {
+form input:focus,
+form select:focus {
     border-color: #4f46e5;
     box-shadow: 0 0 8px rgba(79,70,229,0.3);
+    outline: none;
 }
 
-.radio-group {
-    margin-top: 10px;
-    display: flex;
-    gap: 20px;
-}
-
-.radio-group label {
-    font-weight: 400;
-}
-
-.buttons {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 25px;
-}
-
+/* --- Buttons --- */
 button {
-    flex: 1;
-    padding: 12px 18px;
-    margin: 0 5px;
+    width: 100%;
+    padding: 14px;
+    margin-top: 25px;
     border: none;
-    border-radius: 8px;
-    color: white;
+    border-radius: 10px;
+    background: #4f46e5;
+    color: #ffffff;
     font-weight: bold;
-    cursor: pointer;
     font-size: 16px;
-    transition: background 0.3s ease, transform 0.2s ease;
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
 
-#encryptBtn { background: #4f46e5; }
-#decryptBtn { background: #6b7280; }
-
-#encryptBtn:hover {
+button:hover {
     background: #3b36c4;
     transform: translateY(-2px);
 }
 
-#decryptBtn:hover {
-    background: #4b5563;
-    transform: translateY(-2px);
-}
-
-.hidden { display: none; }
-
+/* --- Progress Bar --- */
 #progressContainer {
-    margin-top: 20px;
+    margin-top: 25px;
 }
 
 #progressBar {
     width: 100%;
     background: #e5e7eb;
-    border-radius: 8px;
+    border-radius: 12px;
     overflow: hidden;
-    height: 18px;
+    height: 20px;
+    margin-top: 10px;
 }
 
 #progressBar span {
     display: block;
     height: 100%;
     width: 0%;
-    background: #4f46e5;
-    transition: width 0.3s;
+    background: linear-gradient(90deg, #4f46e5, #818cf8);
+    transition: width 0.3s ease;
+    border-radius: 12px 0 0 12px;
 }
 
 #status {
-    margin-top: 15px;
-    font-weight: bold;
+    margin-top: 10px;
+    font-weight: 600;
+    color: #1f2937;
 }
 
+/* --- Download Link --- */
 #downloadSection {
     margin-top: 25px;
+    text-align: center;
 }
 
 #downloadLink {
     display: inline-block;
-    margin-top: 12px;
-    padding: 10px 15px;
+    padding: 12px 20px;
     background: #4f46e5;
-    color: white;
-    border-radius: 8px;
+    color: #ffffff;
+    border-radius: 10px;
     text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
 }
 
+#downloadLink:hover {
+    background: #3b36c4;
+    transform: translateY(-2px);
+}
+
+/* --- History --- */
 #historySection {
-    margin-top: 30px;
+    margin-top: 35px;
+}
+
+#historySection h3 {
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #4f46e5;
 }
 
 #historyList {
@@ -137,12 +139,18 @@ button {
 
 #historyList li {
     background: #f1f5f9;
-    padding: 10px;
-    border-radius: 8px;
-    margin-top: 8px;
+    padding: 12px 15px;
+    border-radius: 10px;
+    margin-top: 10px;
     font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #1f2937;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.05);
 }
 
+/* --- Animations --- */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
