@@ -11,9 +11,9 @@ from des import des_encrypt, des_decrypt
 app = Flask(__name__, static_folder='static', template_folder='templates')
 CORS(app)
 
-# Configuration du dossier d’upload
-UPLOAD_FOLDER = "uploads"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+# --- CONFIGURATION UPLOAD ---
+app.config["UPLOAD_FOLDER"] = os.path.join(os.path.dirname(__file__), "uploads")
+os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
 # Logging vers la console
 handler = logging.StreamHandler()
