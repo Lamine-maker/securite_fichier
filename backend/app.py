@@ -4,27 +4,12 @@ from flask import Flask, request, send_file, jsonify, render_template, send_from
 from flask_cors import CORS
 from io import BytesIO
 import os
-import des_crypto
-import aes
+from aes import aes_encrypt, aes_decrypt
+from des import des_encrypt, des_decrypt
 import logging
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 CORS(app)
-
-MAGIC = b"CRYP"
-
-ALGOS = {
-    "aes": 0x01,
-    "des": 0x02
-}
-
-MODES = {
-    "ECB": 0x01,
-    "CFB": 0x02
-}
-
-ALGOS_REV = {v: k for k, v in ALGOS.items()}
-MODES_REV = {v: k for k, v in MODES.items()}
 
 # Logging to console
 handler = logging.StreamHandler()
@@ -43,81 +28,30 @@ def index():
 
 @app.route("/process", methods=["POST"])
 def process():
+    file = request.files.get("file")
     action = request.form.get("action")
-    algo = request.form.get("algo")
+    algorithm = request.form.get("algorithm")
     mode = request.form.get("mode")
-    password = request.form.get("password", "").encode()
-    uploaded_file = request.files.get("file")
+    key = request.form.get("key").encode()
 
-    if not uploaded_file:
-        return "Aucun fichier", 400
+    input_path = os.path.join(UPLOAD_FOLDER, file.filename)
+    output_path = input_path + ".out"
 
-    if action == "encrypt":
-        data = uploaded_file.read()
-        filename = uploaded_file.filename.encode()
+    file.save(input_path)
 
-        # --- CHIFFREMENT ---
-        if algo == "aes":
-            ciphertext, iv = aes.encrypt_data(data, password, mode)
+    if algorithm == "AES":
+        if action == "encrypt":
+            aes_encrypt(input_path, output_path, key, mode)
         else:
-            ciphertext, iv = des_crypto.encrypt_data(data, password, mode)
+            aes_decrypt(input_path, output_path, key, mode)
 
-        header = (
-            MAGIC +
-            struct.pack(
-                "!BBB",
-                ALGOS[algo],
-                MODES[mode],
-                len(iv)
-            ) +
-            iv +
-            struct.pack("!H", len(filename)) +
-            filename
-        )
+    elif algorithm == "DES":
+        if action == "encrypt":
+            des_encrypt(input_path, output_path, key, mode)
+        else:
+            des_decrypt(input_path, output_path, key, mode)
 
-        out = header + ciphertext
-
-        return send_file(
-            BytesIO(out),
-            as_attachment=True,
-            download_name=uploaded_file.filename + ".bin",
-            mimetype="application/octet-stream"
-        )
-
-    # --- DECHIFFREMENT ---
-    raw = uploaded_file.read()
-
-    if raw[:4] != MAGIC:
-        return "Fichier non valide", 400
-
-    algo_id, mode_id, iv_len = struct.unpack("!BBB", raw[4:7])
-    pos = 7
-
-    iv = raw[pos:pos + iv_len]
-    pos += iv_len
-
-    name_len = struct.unpack("!H", raw[pos:pos + 2])[0]
-    pos += 2
-
-    filename = raw[pos:pos + name_len].decode()
-    pos += name_len
-
-    ciphertext = raw[pos:]
-
-    algo = ALGOS_REV[algo_id]
-    mode = MODES_REV[mode_id]
-
-    if algo == "aes":
-        plaintext = aes.decrypt_data(ciphertext, password, mode, iv)
-    else:
-        plaintext = des_crypto.decrypt_data(ciphertext, password, mode, iv)
-
-    return send_file(
-        BytesIO(plaintext),
-        as_attachment=True,
-        download_name=filename,
-        mimetype="application/octet-stream"
-    )
+    return send_file(output_path, as_attachment=True)
 
 
 # serve static
