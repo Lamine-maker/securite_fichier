@@ -1,35 +1,31 @@
+# aes.py
 from Crypto.Cipher import AES
-from Crypto.Random import get_random_bytes
 from Crypto.Util.Padding import pad, unpad
 
-BLOCK_SIZE = 16
+def aes_encrypt(data: bytes, key: bytes, mode: str) -> bytes:
+    key = key.ljust(16, b'\0')[:16]  # s'assurer que la clé fait 16 octets
 
-def aes_encrypt(input_file, output_file, key, mode):
-    data = open(input_file, 'rb').read()
+    if mode.upper() == "ECB":
+        cipher = AES.new(key, AES.MODE_ECB)
+        ciphertext = cipher.encrypt(pad(data, AES.block_size))
+    elif mode.upper() == "CFB":
+        cipher = AES.new(key, AES.MODE_CFB)
+        ciphertext = cipher.encrypt(data)
+    else:
+        raise ValueError(f"Mode AES inconnu: {mode}")
+
+    return ciphertext
+
+def aes_decrypt(data: bytes, key: bytes, mode: str) -> bytes:
     key = key.ljust(16, b'\0')[:16]
 
-    if mode == "ECB":
+    if mode.upper() == "ECB":
         cipher = AES.new(key, AES.MODE_ECB)
-        encrypted = cipher.encrypt(pad(data, BLOCK_SIZE))
-        open(output_file, 'wb').write(encrypted)
+        plaintext = unpad(cipher.decrypt(data), AES.block_size)
+    elif mode.upper() == "CFB":
+        cipher = AES.new(key, AES.MODE_CFB)
+        plaintext = cipher.decrypt(data)
+    else:
+        raise ValueError(f"Mode AES inconnu: {mode}")
 
-    elif mode == "CFB":
-        iv = get_random_bytes(16)
-        cipher = AES.new(key, AES.MODE_CFB, iv=iv)
-        encrypted = iv + cipher.encrypt(data)
-        open(output_file, 'wb').write(encrypted)
-
-def aes_decrypt(input_file, output_file, key, mode):
-    data = open(input_file, 'rb').read()
-    key = key.ljust(16, b'\0')[:16]
-
-    if mode == "ECB":
-        cipher = AES.new(key, AES.MODE_ECB)
-        decrypted = unpad(cipher.decrypt(data), BLOCK_SIZE)
-        open(output_file, 'wb').write(decrypted)
-
-    elif mode == "CFB":
-        iv = data[:16]
-        cipher = AES.new(key, AES.MODE_CFB, iv=iv)
-        decrypted = cipher.decrypt(data[16:])
-        open(output_file, 'wb').write(decrypted)
+    return plaintext
