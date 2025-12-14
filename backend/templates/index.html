@@ -1,66 +1,30 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Chiffrement DES - Projet Lamine</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8">
+    <title>Chiffrement AES/DES</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
-
 <body>
-    <main class="container">
-
-        <header>
-            <h1>Chiffrement DES (ECB / CFB)</h1>
-            <p>Choisissez un fichier, une clé de 8 caractères et un mode de chiffrement.</p>
-        </header>
-
-        <form id="fileForm">
-
-            <label>Fichier :</label>
-            <input id="fileInput" type="file" accept=".doc,.docx,.bin,application/octet-stream" required />
-
-            <label>Clé (8 caractères) :</label>
-            <input id="keyInput" type="password" maxlength="8" required />
-
-            <label>Mode de chiffrement :</label>
-            <div class="radio-group">
-                <label><input type="radio" name="mode" value="ECB" checked> ECB</label>
-                <label><input type="radio" name="mode" value="CFB"> CFB</label>
-            </div>
-
-            <div id="ivSection" class="hidden">
-                <label>IV généré automatiquement :</label>
-                <input id="ivDisplay" type="text" readonly />
-            </div>
-
-            <div class="buttons">
-                <button id="encryptBtn" type="button">Chiffrer</button>
-                <button id="decryptBtn" type="button">Déchiffrer</button>
-            </div>
-
-            <div id="progressContainer" class="hidden">
-                <p>Progression :</p>
-                <div id="progressBar"><span></span></div>
-            </div>
-
-            <p id="status"></p>
-        </form>
-
-        <section id="downloadSection" class="hidden">
-            <h3>Résultat :</h3>
-            <div id="resultInfo"></div>
-            <a id="downloadLink" href="#" download>Télécharger le fichier</a>
-        </section>
-
-        <section id="historySection">
-            <h3>Historique :</h3>
-            <ul id="historyList"></ul>
-        </section>
-
-    </main>
-
-    <script src="script.js"></script>
+    <h1>Chiffrement / Déchiffrement de fichiers</h1>
+    <form id="fileForm">
+        <input type="file" id="fileInput" required><br><br>
+        <label>Clé: <input type="text" id="keyInput" required></label><br><br>
+        <label>Algorithme:</label>
+        <select id="algoSelect">
+            <option value="des">DES</option>
+            <option value="aes">AES</option>
+        </select><br><br>
+        <label>Mode:</label>
+        <input type="radio" name="mode" value="ECB" checked> ECB
+        <input type="radio" name="mode" value="CFB"> CFB<br><br>
+        <button type="button" id="encryptBtn">Chiffrer</button>
+        <button type="button" id="decryptBtn">Déchiffrer</button>
+    </form>
+    <p id="status"></p>
+    <div id="downloadSection" style="display:none;">
+        <a id="downloadLink" href="#" download>Télécharger</a>
+    </div>
+    <script src="/static/script.js"></script>
 </body>
 </html>
