@@ -11,6 +11,10 @@ import logging
 app = Flask(__name__, static_folder='static', template_folder='templates')
 CORS(app)
 
+# Configuration du dossier d’upload
+app.config["UPLOAD_FOLDER"] = "uploads"
+os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+
 # Logging to console
 handler = logging.StreamHandler()
 handler.setLevel(logging.DEBUG)
