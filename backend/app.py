@@ -21,10 +21,6 @@ handler.setLevel(logging.DEBUG)
 app.logger.addHandler(handler)
 app.logger.setLevel(logging.DEBUG)
 
-def _prepare_file_response(data_bytes: bytes, download_name: str):
-    bio = BytesIO(data_bytes)
-    bio.seek(0)
-    return send_file(bio, as_attachment=True, download_name=download_name, mimetype="application/octet-stream")
 
 @app.route('/')
 def index():
@@ -38,7 +34,10 @@ def process():
     mode = request.form.get("mode")
     key = request.form.get("key").encode()
 
-    input_path = os.path.join(UPLOAD_FOLDER, file.filename)
+    if not file:
+        return "Aucun fichier envoyé", 400
+
+    input_path = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
     output_path = input_path + ".out"
 
     file.save(input_path)
@@ -56,12 +55,6 @@ def process():
             des_decrypt(input_path, output_path, key, mode)
 
     return send_file(output_path, as_attachment=True)
-
-
-# serve static
-@app.route('/<path:filename>')
-def serve_static(filename):
-    return send_from_directory(app.static_folder, filename)
 
 if __name__ == "__main__":
     host = os.environ.get("HOST", "0.0.0.0")
