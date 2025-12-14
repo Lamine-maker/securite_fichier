@@ -1,40 +1,44 @@
-# des_crypto.py
 from Crypto.Cipher import DES
 from Crypto.Random import get_random_bytes
+from Crypto.Util.Padding import pad, unpad
+import hashlib
 
-BLOCK_SIZE = 8  # DES block size in bytes
 
-def pad(data: bytes) -> bytes:
-    pad_len = BLOCK_SIZE - len(data) % BLOCK_SIZE
-    return data + bytes([pad_len] * pad_len)
+BLOCK_SIZE = 8
 
-def unpad(data: bytes) -> bytes:
-    pad_len = data[-1]
-    if pad_len < 1 or pad_len > BLOCK_SIZE:
-        raise ValueError("Invalid padding")
-    return data[:-pad_len]
 
-def encrypt_data(data: bytes, key: bytes, mode: str = "ECB") -> bytes:
-    mode = mode.upper()
+def derive_key(password: str) -> bytes:
+    return hashlib.md5(password.encode()).digest()[:8]
+
+
+def encrypt(data: bytes, password: str, mode: str) -> bytes:
+    key = derive_key(password)
+
     if mode == "ECB":
         cipher = DES.new(key, DES.MODE_ECB)
-        return cipher.encrypt(pad(data))
+        return cipher.encrypt(pad(data, BLOCK_SIZE))
+
     elif mode == "CFB":
         iv = get_random_bytes(BLOCK_SIZE)
         cipher = DES.new(key, DES.MODE_CFB, iv=iv)
-        return iv + cipher.encrypt(data)  # prepend IV for decryption
-    else:
-        raise ValueError("Mode DES invalide (ECB ou CFB)")
+        return iv + cipher.encrypt(data)
 
-def decrypt_data(data: bytes, key: bytes, mode: str = "ECB") -> bytes:
-    mode = mode.upper()
+    else:
+        raise ValueError("Mode DES invalide")
+
+
+def decrypt(data: bytes, password: str, mode: str) -> bytes:
+    key = derive_key(password)
+
     if mode == "ECB":
         cipher = DES.new(key, DES.MODE_ECB)
-        return unpad(cipher.decrypt(data))
+        return unpad(cipher.decrypt(data), BLOCK_SIZE)
+
     elif mode == "CFB":
         iv = data[:BLOCK_SIZE]
         ciphertext = data[BLOCK_SIZE:]
         cipher = DES.new(key, DES.MODE_CFB, iv=iv)
         return cipher.decrypt(ciphertext)
+
     else:
-        raise ValueError("Mode DES invalide (ECB ou CFB)")
+        raise ValueError("Mode DES invalide")

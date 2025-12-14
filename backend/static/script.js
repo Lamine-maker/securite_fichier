@@ -1,48 +1,76 @@
-const fileInput = document.getElementById("fileInput");
-const keyInput = document.getElementById("keyInput");
-const encryptBtn = document.getElementById("encryptBtn");
-const decryptBtn = document.getElementById("decryptBtn");
-const algoSelect = document.getElementById("algoSelect");
-const statusEl = document.getElementById("status");
-const downloadLink = document.getElementById("downloadLink");
-const downloadSection = document.getElementById("downloadSection");
+const fileInput = document.getElementById("file");
+const passwordInput = document.getElementById("password");
+const algoSelect = document.getElementById("algo");
+const modeSelect = document.getElementById("mode");
 
-async function sendFile(endpoint){
+function showError(msg) {
+    alert("❌ " + msg);
+}
+
+function showSuccess(msg) {
+    alert("✅ " + msg);
+}
+
+async function send(action) {
     const file = fileInput.files[0];
-    const key = keyInput.value;
+    const password = passwordInput.value.trim();
     const algo = algoSelect.value;
-    const mode = document.querySelector('input[name="mode"]:checked').value;
+    const mode = modeSelect.value;
 
-    if(!file){ statusEl.textContent="Choisir un fichier"; return; }
+    // 🔎 Vérifications côté client
+    if (!file) {
+        showError("Veuillez sélectionner un fichier");
+        return;
+    }
 
-    if(algo==="des" && key.length!==8){ statusEl.textContent="Clé DES: 8 caractères"; return; }
-    if(algo==="aes" && ![16,24,32].includes(key.length)){ statusEl.textContent="Clé AES: 16,24,32 caractères"; return; }
+    if (!password) {
+        showError("Le mot de passe est obligatoire");
+        return;
+    }
 
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("key", key);
+    formData.append("password", password);
     formData.append("algo", algo);
     formData.append("mode", mode);
+    formData.append("action", action);
 
-    statusEl.textContent="Envoi en cours...";
+    try {
+        const response = await fetch("/process", {
+            method: "POST",
+            body: formData
+        });
 
-    try{
-        const res = await fetch(`/api/${endpoint}`, {method:"POST", body:formData});
-        if(!res.ok){ 
-            const txt = await res.json().catch(()=>null);
-            throw new Error(txt?.error||`Erreur ${res.status}`);
+        // 🚨 Erreur serveur
+        if (!response.ok) {
+            const text = await response.text();
+            throw new Error(text || "Erreur serveur");
         }
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        downloadLink.href = url;
-        downloadLink.download = file.name.split(".")[0] + `_${algo}_${endpoint}.bin`;
-        downloadSection.style.display="block";
-        statusEl.textContent="Succès !";
-    }catch(err){
-        statusEl.textContent="Erreur: "+err.message;
-        downloadSection.style.display="none";
+
+        const blob = await response.blob();
+
+        // 📥 Téléchargement
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+
+        // Nom de fichier logique
+        if (action === "encrypt") {
+            a.download = file.name + ".bin";
+        } else {
+            a.download = file.name.replace(/\.bin$/, "");
+        }
+
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+
+        showSuccess(action === "encrypt"
+            ? "Fichier chiffré avec succès"
+            : "Fichier déchiffré avec succès");
+
+    } catch (err) {
+        showError(err.message);
     }
 }
-
-encryptBtn.addEventListener("click", ()=>sendFile("encrypt"));
-decryptBtn.addEventListener("click", ()=>sendFile("decrypt"));

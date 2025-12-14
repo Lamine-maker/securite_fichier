@@ -10,6 +10,21 @@ import logging
 app = Flask(__name__, static_folder='static', template_folder='templates')
 CORS(app)
 
+MAGIC = b"CRYP"
+
+ALGOS = {
+    "aes": 0x01,
+    "des": 0x02
+}
+
+MODES = {
+    "ECB": 0x01,
+    "CFB": 0x02
+}
+
+ALGOS_REV = {v: k for k, v in ALGOS.items()}
+MODES_REV = {v: k for k, v in MODES.items()}
+
 # Logging to console
 handler = logging.StreamHandler()
 handler.setLevel(logging.DEBUG)
@@ -25,73 +40,84 @@ def _prepare_file_response(data_bytes: bytes, download_name: str):
 def index():
     return render_template('index.html')
 
-@app.route("/api/encrypt", methods=["POST"])
-def encrypt_file():
-    try:
-        uploaded_file = request.files.get("file")
-        algo = (request.form.get("algo") or "des").lower()
-        mode = (request.form.get("mode") or "ECB").upper()
-        key_text = request.form.get("key", "")
-        key = key_text.encode()
+@app.route("/process", methods=["POST"])
+def process():
+    action = request.form.get("action")
+    algo = request.form.get("algo")
+    mode = request.form.get("mode")
+    password = request.form.get("password", "").encode()
+    uploaded_file = request.files.get("file")
 
-        if not uploaded_file:
-            return jsonify({"error": "Aucun fichier envoyé"}), 400
+    if not uploaded_file:
+        return "Aucun fichier", 400
 
+    if action == "encrypt":
         data = uploaded_file.read()
-        logging.debug(f"Encrypt {algo} {mode} key_len={len(key)} file_len={len(data)}")
+        filename = uploaded_file.filename.encode()
 
-        if algo == "des":
-            if len(key) != 8:
-                return jsonify({"error": "Clé DES doit être 8 caractères"}), 400
-            ciphertext = des_crypto.encrypt_data(data, key, mode)
-        elif algo == "aes":
-            if len(key) not in (16, 24, 32):
-                return jsonify({"error": "Clé AES doit être 16, 24 ou 32 caractères"}), 400
-            ciphertext = aes.encrypt_data(data, key, mode)
+        # --- CHIFFREMENT ---
+        if algo == "aes":
+            ciphertext, iv = aes.encrypt_data(data, password, mode)
         else:
-            return jsonify({"error": "Algorithme invalide"}), 400
+            ciphertext, iv = des_crypto.encrypt_data(data, password, mode)
 
-        ext = f"_{algo}_encrypted.bin"
-        download_name = os.path.splitext(uploaded_file.filename)[0] + ext
-        return _prepare_file_response(ciphertext, download_name)
+        header = (
+            MAGIC +
+            struct.pack(
+                "!BBB",
+                ALGOS[algo],
+                MODES[mode],
+                len(iv)
+            ) +
+            iv +
+            struct.pack("!H", len(filename)) +
+            filename
+        )
 
-    except Exception as e:
-        logging.exception("Encryption failed")
-        return jsonify({"error": str(e)}), 500
+        out = header + ciphertext
 
-@app.route("/api/decrypt", methods=["POST"])
-def decrypt_file():
-    try:
-        uploaded_file = request.files.get("file")
-        algo = (request.form.get("algo") or "des").lower()
-        mode = (request.form.get("mode") or "ECB").upper()
-        key_text = request.form.get("key", "")
-        key = key_text.encode()
+        return send_file(
+            BytesIO(out),
+            as_attachment=True,
+            download_name=uploaded_file.filename + ".bin",
+            mimetype="application/octet-stream"
+        )
 
-        if not uploaded_file:
-            return jsonify({"error": "Aucun fichier envoyé"}), 400
+    # --- DECHIFFREMENT ---
+    raw = uploaded_file.read()
 
-        data = uploaded_file.read()
-        logging.debug(f"Decrypt {algo} {mode} key_len={len(key)} file_len={len(data)}")
+    if raw[:4] != MAGIC:
+        return "Fichier non valide", 400
 
-        if algo == "des":
-            if len(key) != 8:
-                return jsonify({"error": "Clé DES doit être 8 caractères"}), 400
-            plaintext = des_crypto.decrypt_data(data, key, mode)
-        elif algo == "aes":
-            if len(key) not in (16, 24, 32):
-                return jsonify({"error": "Clé AES doit être 16, 24 ou 32 caractères"}), 400
-            plaintext = aes.decrypt_data(data, key, mode)
-        else:
-            return jsonify({"error": "Algorithme invalide"}), 400
+    algo_id, mode_id, iv_len = struct.unpack("!BBB", raw[4:7])
+    pos = 7
 
-        ext = f"_{algo}_decrypted.bin"
-        download_name = os.path.splitext(uploaded_file.filename)[0] + ext
-        return _prepare_file_response(plaintext, download_name)
+    iv = raw[pos:pos + iv_len]
+    pos += iv_len
 
-    except Exception as e:
-        logging.exception("Decryption failed")
-        return jsonify({"error": str(e)}), 500
+    name_len = struct.unpack("!H", raw[pos:pos + 2])[0]
+    pos += 2
+
+    filename = raw[pos:pos + name_len].decode()
+    pos += name_len
+
+    ciphertext = raw[pos:]
+
+    algo = ALGOS_REV[algo_id]
+    mode = MODES_REV[mode_id]
+
+    if algo == "aes":
+        plaintext = aes.decrypt_data(ciphertext, password, mode, iv)
+    else:
+        plaintext = des_crypto.decrypt_data(ciphertext, password, mode, iv)
+
+    return send_file(
+        BytesIO(plaintext),
+        as_attachment=True,
+        download_name=filename,
+        mimetype="application/octet-stream"
+    )
+
 
 # serve static
 @app.route('/<path:filename>')
