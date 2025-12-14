@@ -150,6 +150,41 @@ button:hover {
     box-shadow: 0 3px 6px rgba(0,0,0,0.05);
 }
 
+/* Conteneur */
+.file-upload {
+    position: relative;
+    width: 100%;
+    margin-top: 10px;
+}
+
+/* Input réel caché */
+.file-upload input[type="file"] {
+    opacity: 0;
+    width: 100%;
+    height: 50px;
+    position: absolute;
+    cursor: pointer;
+}
+
+/* Label stylé comme un bouton */
+.file-upload label {
+    display: block;
+    width: 100%;
+    padding: 12px 15px;
+    background: #4f46e5;
+    color: white;
+    font-weight: 600;
+    text-align: center;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.file-upload label:hover {
+    background: #3b36c4;
+    transform: translateY(-2px);
+}
+
 /* --- Animations --- */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }

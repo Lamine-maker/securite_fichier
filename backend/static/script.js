@@ -3,11 +3,12 @@ document.addEventListener("DOMContentLoaded", function () {
     const form = document.querySelector("form");
     const algorithm = document.querySelector("select[name='algorithm']");
     const keyInput = document.querySelector("input[name='key']");
-    const fileInput = document.querySelector("input[type='file']");
     const progressBar = document.querySelector("#progressBar span");
     const status = document.querySelector("#status");
     const downloadLink = document.querySelector("#downloadLink");
     const historyList = document.querySelector("#historyList");
+    const fileInput = document.getElementById("fileInput");
+    const fileLabel = document.getElementById("fileLabel");
 
     // Historique en mémoire
     let history = [];
@@ -110,5 +111,13 @@ document.addEventListener("DOMContentLoaded", function () {
             historyList.appendChild(li);
         });
     }
+
+    fileInput.addEventListener("change", function () {
+        if (this.files && this.files.length > 0) {
+            fileLabel.textContent = this.files[0].name;
+        } else {
+            fileLabel.textContent = "Choisir un fichier";
+        }
+    });
 
 });
