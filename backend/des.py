@@ -2,50 +2,34 @@
 from Crypto.Cipher import DES
 from Crypto.Util.Padding import pad, unpad
 
-def des_encrypt(data: bytes, key: bytes, mode: str) -> bytes:
-    """
-    Chiffre les données avec DES.
-
-    Args:
-        data (bytes): données à chiffrer
-        key (bytes): clé (8 octets)
-        mode (str): mode de chiffrement ('ECB', 'CFB')
-
-    Returns:
-        bytes: données chiffrées
-    """
-    key = key.ljust(8, b'\0')[:8]  # DES utilise 8 octets
-    if mode.upper() == "ECB":
-        cipher = DES.new(key, DES.MODE_ECB)
-        ciphertext = cipher.encrypt(pad(data, DES.block_size))
-    elif mode.upper() == "CFB":
-        cipher = DES.new(key, DES.MODE_CFB)
-        ciphertext = cipher.encrypt(data)
+def des_encrypt(data: bytes, key: bytes, mode: str = "ECB") -> bytes:
+    if len(key) != 8:
+        raise ValueError("La clé DES doit faire 8 octets")
+    
+    cipher_mode = DES.MODE_ECB if mode.upper() == "ECB" else DES.MODE_CBC
+    if cipher_mode == DES.MODE_CBC:
+        from Crypto.Random import get_random_bytes
+        iv = get_random_bytes(8)
+        cipher = DES.new(key, cipher_mode, iv)
+        encrypted = iv + cipher.encrypt(pad(data, 8))
     else:
-        raise ValueError(f"Mode DES inconnu: {mode}")
+        cipher = DES.new(key, cipher_mode)
+        encrypted = cipher.encrypt(pad(data, 8))
+    
+    return encrypted
 
-    return ciphertext
-
-def des_decrypt(data: bytes, key: bytes, mode: str) -> bytes:
-    """
-    Déchiffre les données avec DES.
-
-    Args:
-        data (bytes): données à déchiffrer
-        key (bytes): clé (8 octets)
-        mode (str): mode de chiffrement ('ECB', 'CFB')
-
-    Returns:
-        bytes: données déchiffrées
-    """
-    key = key.ljust(8, b'\0')[:8]
-    if mode.upper() == "ECB":
-        cipher = DES.new(key, DES.MODE_ECB)
-        plaintext = unpad(cipher.decrypt(data), DES.block_size)
-    elif mode.upper() == "CFB":
-        cipher = DES.new(key, DES.MODE_CFB)
-        plaintext = cipher.decrypt(data)
+def des_decrypt(data: bytes, key: bytes, mode: str = "ECB") -> bytes:
+    if len(key) != 8:
+        raise ValueError("La clé DES doit faire 8 octets")
+    
+    cipher_mode = DES.MODE_ECB if mode.upper() == "ECB" else DES.MODE_CBC
+    if cipher_mode == DES.MODE_CBC:
+        iv = data[:8]
+        encrypted_data = data[8:]
+        cipher = DES.new(key, cipher_mode, iv)
+        decrypted = unpad(cipher.decrypt(encrypted_data), 8)
     else:
-        raise ValueError(f"Mode DES inconnu: {mode}")
-
-    return plaintext
+        cipher = DES.new(key, cipher_mode)
+        decrypted = unpad(cipher.decrypt(data), 8)
+    
+    return decrypted
