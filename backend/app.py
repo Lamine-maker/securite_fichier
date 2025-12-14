@@ -1,4 +1,5 @@
 # app.py
+import struct
 from flask import Flask, request, send_file, jsonify, render_template, send_from_directory, make_response
 from flask_cors import CORS
 from io import BytesIO
