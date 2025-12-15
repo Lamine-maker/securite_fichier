@@ -16,8 +16,11 @@
 
     <!-- Formulaire -->
     <form action="/process" method="POST" enctype="multipart/form-data">
-        <label for="file">Fichier :</label>
-        <input type="file" name="file" id="file" required>
+        <div class="file-upload">
+            <input type="file" name="file" id="fileInput" required>
+            <label for="fileInput" id="fileLabel">Choisir un fichier</label>
+        </div>
+
 
         <label for="action">Action :</label>
         <select name="action" id="action">
